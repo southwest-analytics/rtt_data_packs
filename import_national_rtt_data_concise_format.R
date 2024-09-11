@@ -79,7 +79,8 @@ fnStandardiseFieldNames <- function(df){
 
 # * 0.3. RTT data directory ----
 # ──────────────────────────────
-data_path = 'C:\\Users\\richard.blackwell\\OneDrive - Health Innovation South West\\Data\\NHSD\\RTT\\'
+#data_path = 'C:\\Users\\richard.blackwell\\OneDrive - Health Innovation South West\\Data\\NHSD\\RTT\\'
+data_path = 'C:\\Users\\richard\\OneDrive - Health Innovation South West\\Data\\NHSD\\RTT\\'
 
 # 1. Process data ----
 # ════════════════════
@@ -107,15 +108,26 @@ saveRDS(df_data, 'rtt_data.rds')
 
 # * 1.2. Process RTT data for last month detail ----
 # ──────────────────────────────────────────────────
-
-df_detail <- read.csv(tail(list.files(data_path, full.names = TRUE), n = 1)) %>% 
-  
-  select(any_of(c(
+most_recent_file <- tail(list.files(data_path, full.names = TRUE), n = 1)
+df_detail_wide <- read.csv(most_recent_file) %>% 
+  mutate(Filename = basename(most_recent_file), .before = 1) %>%
+  fnStandardiseFieldNames() %>%
+  select(any_of(c('Filename',
                   'Provider_Code', 'Provider_Name',
                   'RTT_Part', 'RTT_Part_Desc',
-                  'Treatment_Function_Code', 'Treatment_Function_Name','Total')
-                ) | any_of(matches('^Gt.'))) %>% names()
-  
+                  'Treatment_Function_Code', 'Treatment_Function_Name','Grand_Total')
+                ) | any_of(matches('^Wk'))) %>% 
+  group_by(Filename, Provider_Code, Provider_Name, RTT_Part, RTT_Part_Desc,
+           Treatment_Function_Code, Treatment_Function_Name) %>%
+  summarise(across(.cols = everything(), .fns = function(x){sum(x, na.rm = TRUE)}),
+            .groups = 'keep') %>%
+  ungroup() %>%
+  mutate(across(.cols = 1:7, .fns = as.factor))
 
+df_detail_long <- df_detail_wide %>% 
+  pivot_longer(cols = 9:NCOL(.), names_to = 'Weeks', values_to = 'Volume') %>%
+  mutate(Weeks = as.integer(gsub('Wk', '', Weeks)))
 
-fnProcessFile(tail(list.files(data_path, full.names = TRUE), n = 1))
+# Save the detailed data as R objects
+saveRDS(df_detail_wide, 'current_wl_wide_format.rds')
+saveRDS(df_detail_long, 'current_wl_long_format.rds')
