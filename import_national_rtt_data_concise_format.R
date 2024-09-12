@@ -35,7 +35,7 @@ fnProcessFile <- function(x){
                     'Wk00', 'Wk01', 'Wk02', 'Wk03', 'Wk04',
                     'Wk05', 'Wk06', 'Wk07', 'Wk08', 'Wk09',
                     'Wk10', 'Wk11', 'Wk12', 'Wk13', 'Wk14',
-                    'Wk15', 'Wk16', 'Wk17', 'Total'))) %>%
+                    'Wk15', 'Wk16', 'Wk17', 'Grand_Total'))) %>%
     # Trim any empty rows
     dplyr::filter(!is.na(Provider_Code)) %>%
     # Ensure numbers are numbers
@@ -79,8 +79,8 @@ fnStandardiseFieldNames <- function(df){
 
 # * 0.3. RTT data directory ----
 # ──────────────────────────────
-#data_path = 'C:\\Users\\richard.blackwell\\OneDrive - Health Innovation South West\\Data\\NHSD\\RTT\\'
-data_path = 'C:\\Users\\richard\\OneDrive - Health Innovation South West\\Data\\NHSD\\RTT\\'
+data_path = 'C:\\Users\\richard.blackwell\\OneDrive - Health Innovation South West\\Data\\NHSD\\RTT\\'
+#data_path = 'C:\\Users\\richard\\OneDrive - Health Innovation South West\\Data\\NHSD\\RTT\\'
 
 # 1. Process data ----
 # ════════════════════
@@ -101,7 +101,10 @@ res <- parallel::parLapply(clust, X = list.files(data_path, full.names = TRUE), 
 stopCluster(clust)
 
 # Combine the results into one data frame
-df_data <- do.call('rbind', res)
+df_data <- do.call('rbind', res) %>%
+  # Standardise the RTT_Part entries
+  mutate(RTT_Part = toupper(RTT_Part)) %>% 
+  mutate(across(.cols = 1:7, .fns = as.factor))
 
 # Save the data as an R object
 saveRDS(df_data, 'rtt_data.rds')
@@ -122,6 +125,8 @@ df_detail_wide <- read.csv(most_recent_file) %>%
   summarise(across(.cols = everything(), .fns = function(x){sum(x, na.rm = TRUE)}),
             .groups = 'keep') %>%
   ungroup() %>%
+  # Standardise the RTT_Part entries
+  mutate(RTT_Part = toupper(RTT_Part)) %>% 
   mutate(across(.cols = 1:7, .fns = as.factor))
 
 df_detail_long <- df_detail_wide %>% 
