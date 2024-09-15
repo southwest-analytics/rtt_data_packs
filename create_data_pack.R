@@ -23,7 +23,7 @@ fnTimeseriesPlot <- function(df, str_title, str_x_axis, str_y_axis, b_interactiv
       theme_bw(base_size = 12) %+%
       theme(plot.title = element_text(hjust = .5),
             axis.text.x = element_text(angle = 90, hjust = 1, vjust = .5)) %+%
-      labs(title = str_title, x = str_x_axis, y = str_y_axis) %+%
+      labs(title = str_wrap(str_title, width = 60), x = str_x_axis, y = str_y_axis) %+%
       geom_line(data = df, aes(x = Period, y = Grand_Total), colour = '#005EB8', linewidth = 1) %+%
       geom_point(data = df, aes(x = Period, y = Grand_Total), 
                  shape = 21, fill = '#FFFFFF', color = '#005EB8', size = 2, stroke = 1.5) %+%
@@ -51,7 +51,7 @@ fnHistogramPlot <- function(df, str_title, str_x_axis, str_y_axis, b_interactive
     plt <- ggplot() %+%
       theme_bw(base_size = 12) %+%
       theme(plot.title = element_text(hjust = .5)) %+%
-      labs(title = str_title, x = str_x_axis, y = str_y_axis) %+%
+      labs(title = str_wrap(str_title, width = 60), x = str_x_axis, y = str_y_axis) %+%
       geom_histogram(data = df,
                      aes(x = Grand_Total), fill = '#005EB8', color = '#003087')
   } else {
@@ -107,8 +107,8 @@ df_tfc_lu <- data.frame(Treatment_Function_Code = c('C_100', 'C_101', 'C_110', '
 df_rtt_type_lu <- data.frame(RTT_Part = c('PART_1A', 'PART_1B', 'PART_2', 'PART_2A', 'PART_3'),
                              RTT_Part_Desc = c('Completed Pathways For Admitted Patients',
                                                'Completed Pathways For Non-Admitted Patients',
-                                               'Incomplete Pathways', 'New RTT Periods - All Patients', 
-                                               'Incomplete Pathways with DTA'))
+                                               'Incomplete Pathways', 'Incomplete Pathways with DTA',
+                                               'New RTT Periods - All Patients'))
 
 
 # * * 1.3.3 Working days ----
@@ -197,6 +197,23 @@ df_nonadm_stops <- df_data %>%
             .groups = 'keep') %>%
   ungroup()
 
+# * 2.6. Non-admitted waiting list shape ----
+# ───────────────────────────────────────────
+df_nonadm_wl_shape <- df_detail_long %>% 
+  dplyr::filter(Provider_Code %in% provider_code_selection &
+                  RTT_Part %in% c('PART_2', 'PART_2A')) %>%
+  select(Treatment_Function_Code, RTT_Part, Weeks, Volume) %>% 
+  pivot_wider(names_from = RTT_Part, values_from = Volume, values_fill = 0) %>%
+  mutate(Treatment_Function_Code, Weeks, Volume = PART_2 - PART_2A, .keep = 'none')
+  
+
+# * 2.7. Admitted waiting list shape ----
+# ───────────────────────────────────────
+df_adm_wl_shape <- df_detail_long %>% 
+  dplyr::filter(Provider_Code %in% provider_code_selection &
+                  RTT_Part== 'PART_2A') %>%
+  select(Treatment_Function_Code, Weeks, Volume)
+
 # 3. Create data pack ----
 # ════════════════════════
 selected_tfc <- 'C_110'
@@ -242,10 +259,9 @@ ftbl_nonadm_starts <- flextable(data = df_table_data) %>%
   bold(bold = TRUE, part = "header")
 
 # * * * 3.1.1.1. Time series - Entire data set ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Non-Admitted Clock Starts at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Non-Admitted Clock Starts at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
 str_x_axis <- 'Month'
 str_y_axis <- 'Non-Admitted Clock Starts'
 #b_interactive = FALSE
@@ -253,19 +269,17 @@ plt_nonadm_starts_ts_entire <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::fil
                                                 str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.1.2. Time series - Selected time period ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Non-Admitted Clock Starts at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Non-Admitted Clock Starts at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
 plt_nonadm_starts_ts_selected <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                           Period >= end_date - selected_period &
                                                                                           Period <= end_date),
                                                   str_title, str_x_axis, str_y_axis, b_interactive)
 # * * * 3.1.1.3. Histogram - Entire data set ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Non-Admitted Clock Starts at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Non-Admitted Clock Starts at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
 str_x_axis <- 'Non-Admitted Clock Starts'
 str_y_axis <- 'Frequency'
 #b_interactive = TRUE
@@ -273,10 +287,9 @@ plt_nonadm_starts_hs_entire <- fnHistogramPlot(df_plot_data %>% dplyr::filter(Tr
                                                str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.1.4. Histogram - Selected time period ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Non-Admitted Clock Starts at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Non-Admitted Clock Starts at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
 plt_nonadm_starts_hs_selected <- fnHistogramPlot(df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                       Period >= end_date - selected_period &
                                                                                       Period <= end_date),
@@ -328,10 +341,9 @@ ftbl_nonadm_starts_wda <- flextable(data = df_table_data) %>%
   bold(bold = TRUE, part = "header")
 
 # * * * 3.1.2.1. Time series - Entire data set ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Non-Admitted Clock Starts Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Non-Admitted Clock Starts Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
 str_x_axis <- 'Month'
 str_y_axis <- 'Non-Admitted Clock Starts (Working Day Adjusted)'
 #b_interactive = FALSE
@@ -339,19 +351,17 @@ plt_nonadm_starts_wda_ts_entire <- fnTimeseriesPlot(df = df_plot_data %>% dplyr:
                                                     str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.2.2. Time series - Selected time period ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Non-Admitted Clock Starts Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Non-Admitted Clock Starts Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
 plt_nonadm_starts_wda_ts_selected <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                             Period >= end_date - selected_period &
                                                                                             Period <= end_date),
                                                       str_title, str_x_axis, str_y_axis, b_interactive)
 # * * * 3.1.2.3. Histogram - Entire data set ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Non-Admitted Clock Starts Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Non-Admitted Clock Starts Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
 str_x_axis <- 'Non-Admitted Clock Starts (Working Day Adjusted)'
 str_y_axis <- 'Frequency'
 #b_interactive = TRUE
@@ -359,10 +369,9 @@ plt_nonadm_starts_wda_hs_entire <- fnHistogramPlot(df_plot_data %>% dplyr::filte
                                                str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.2.4. Histogram - Selected time period ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Non-Admitted Clock Starts Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Non-Admitted Clock Starts Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
 plt_nonadm_starts_wda_hs_selected <- fnHistogramPlot(df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                       Period >= end_date - selected_period &
                                                                                       Period <= end_date),
@@ -412,10 +421,9 @@ ftbl_nonadm_stops <- flextable(data = df_table_data) %>%
   bold(bold = TRUE, part = "header")
 
 # * * * 3.1.3.1. Time series - Entire data set ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Non-Admitted Clock Stops at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Non-Admitted Clock Stops at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
 str_x_axis <- 'Month'
 str_y_axis <- 'Non-Admitted Clock Stops'
 #b_interactive = FALSE
@@ -423,19 +431,19 @@ plt_nonadm_stops_ts_entire <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::filt
                                                str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.3.2. Time series - Selected time period ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Non-Admitted Clock Stops at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Non-Admitted Clock Stops at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                    
 plt_nonadm_stops_ts_selected <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                        Period >= end_date - selected_period &
                                                                                        Period <= end_date),
                                                  str_title, str_x_axis, str_y_axis, b_interactive)
 # * * * 3.1.3.3. Histogram - Entire data set ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Non-Admitted Clock Stops at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Non-Admitted Clock Stops at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Non-Admitted Clock Stops'
 str_y_axis <- 'Frequency'
 #b_interactive = TRUE
@@ -443,10 +451,10 @@ plt_nonadm_stops_hs_entire <- fnHistogramPlot(df_plot_data %>% dplyr::filter(Tre
                                               str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.3.4. Histogram - Selected time period ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Non-Admitted Clock Stops at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Non-Admitted Clock Stops at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_nonadm_stops_hs_selected <- fnHistogramPlot(df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                   Period >= end_date - selected_period &
                                                                                   Period <= end_date),
@@ -499,10 +507,10 @@ ftbl_nonadm_stops_wda <- flextable(data = df_table_data) %>%
 
 
 # * * * 3.1.4.1. Time series - Entire data set ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Non-Admitted Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Non-Admitted Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Month'
 str_y_axis <- 'Non-Admitted Clock Stops (Working Day Adjusted)'
 #b_interactive = FALSE
@@ -510,19 +518,19 @@ plt_nonadm_stops_wda_ts_entire <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::
                                                     str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.4.2. Time series - Selected time period ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Non-Admitted Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Non-Admitted Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_nonadm_stops_wda_ts_selected <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                             Period >= end_date - selected_period &
                                                                                             Period <= end_date),
                                                       str_title, str_x_axis, str_y_axis, b_interactive)
 # * * * 3.1.4.3. Histogram - Entire data set ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Non-Admitted Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Non-Admitted Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Non-Admitted Clock Stops (Working Day Adjusted)'
 str_y_axis <- 'Frequency'
 #b_interactive = TRUE
@@ -530,10 +538,10 @@ plt_nonadm_stops_wda_hs_entire <- fnHistogramPlot(df_plot_data %>% dplyr::filter
                                                    str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.4.4. Histogram - Selected time period ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Non-Admitted Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Non-Admitted Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_nonadm_stops_wda_hs_selected <- fnHistogramPlot(df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                       Period >= end_date - selected_period &
                                                                                       Period <= end_date),
@@ -583,10 +591,10 @@ ftbl_adm_stops <- flextable(data = df_table_data) %>%
   bold(bold = TRUE, part = "header")
 
 # * * * 3.1.5.1. Time series - Entire data set ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Admitted Clock Stops at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Admitted Clock Stops at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Month'
 str_y_axis <- 'Admitted Clock Stops'
 #b_interactive = FALSE
@@ -594,19 +602,19 @@ plt_adm_stops_ts_entire <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::filter(
                                                str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.5.2. Time series - Selected time period ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Admitted Clock Stops at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Admitted Clock Stops at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_adm_stops_ts_selected <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                        Period >= end_date - selected_period &
                                                                                        Period <= end_date),
                                                  str_title, str_x_axis, str_y_axis, b_interactive)
 # * * * 3.1.5.3. Histogram - Entire data set ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Admitted Clock Stops at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Admitted Clock Stops at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Admitted Clock Stops'
 str_y_axis <- 'Frequency'
 #b_interactive = TRUE
@@ -614,10 +622,10 @@ plt_adm_stops_hs_entire <- fnHistogramPlot(df_plot_data %>% dplyr::filter(Treatm
                                               str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.5.4. Histogram - Selected time period ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Admitted Clock Stops at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Admitted Clock Stops at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_adm_stops_hs_selected <- fnHistogramPlot(df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                  Period >= end_date - selected_period &
                                                                                  Period <= end_date),
@@ -669,10 +677,10 @@ ftbl_adm_stops_wda <- flextable(data = df_table_data) %>%
   bold(bold = TRUE, part = "header")
 
 # * * * 3.1.6.1. Time series - Entire data set ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Admitted Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Admitted Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Month'
 str_y_axis <- 'Admitted Clock Stops (Working Day Adjusted)'
 #b_interactive = FALSE
@@ -680,19 +688,19 @@ plt_adm_stops_wda_ts_entire <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::fil
                                                    str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.6.2. Time series - Selected time period ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Admitted Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Admitted Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_adm_stops_wda_ts_selected <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                            Period >= end_date - selected_period &
                                                                                            Period <= end_date),
                                                      str_title, str_x_axis, str_y_axis, b_interactive)
 # * * * 3.1.6.3. Histogram - Entire data set ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Admitted Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Admitted Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Admitted Clock Stops (Working Day Adjusted)'
 str_y_axis <- 'Frequency'
 #b_interactive = TRUE
@@ -700,10 +708,10 @@ plt_adm_stops_wda_hs_entire <- fnHistogramPlot(df_plot_data %>% dplyr::filter(Tr
                                                   str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.6.4. Histogram - Selected time period ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Admitted Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Admitted Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_adm_stops_wda_hs_selected <- fnHistogramPlot(df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                      Period >= end_date - selected_period &
                                                                                      Period <= end_date),
@@ -719,10 +727,10 @@ save(list = c('plt_adm_stops_wda_ts_entire', 'plt_adm_stops_wda_ts_selected',
 df_plot_data <- df_nonadm_wl
 
 # * * * 3.1.7.1. Time series - Entire data set ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Non-Admitted Waiting List Size at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Non-Admitted Waiting List Size at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Month'
 str_y_axis <- 'Non-Admitted Waiting List Size'
 #b_interactive = FALSE
@@ -730,10 +738,10 @@ plt_nonadm_wl_size_ts_entire <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::fi
                                                str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.7.2. Time series - Selected time period ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Non-Admitted Waiting List Size at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Non-Admitted Waiting List Size at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_nonadm_wl_size_ts_selected <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                        Period >= wl_start_date &
                                                                                        Period <= end_date),
@@ -747,10 +755,10 @@ save(list = c('plt_nonadm_wl_size_ts_entire', 'plt_nonadm_wl_size_ts_selected'),
 df_plot_data <- df_adm_wl
 
 # * * * 3.1.8.1. Time series - Entire data set ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Admitted Waiting List Size at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Admitted Waiting List Size at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Month'
 str_y_axis <- 'Non-Admitted Waiting List Size'
 #b_interactive = FALSE
@@ -758,10 +766,10 @@ plt_adm_wl_size_ts_entire <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::filte
                                                  str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.8.2. Time series - Selected time period ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Admitted Waiting List Size at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Admitted Waiting List Size at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_adm_wl_size_ts_selected <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                          Period >= wl_start_date &
                                                                                          Period <= end_date),
@@ -800,7 +808,8 @@ df <- df_plot_data %>% select(Period, Delta, Observed_Delta) %>% pivot_longer(co
 str_title <- str_wrap(sprintf('Difference between Difference in Clock Starts and Clock Stops (Delta) and the Difference in Consecutive Waiting List Sizes (Observed Delta) of %s (%s) Admitted and Non-Admitted Pathways Combined at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
                               selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                      width = 60)
+                      
 str_x_axis <- 'Month'
 str_y_axis <- 'Change in Waiting List Size'
 #b_interactive <- TRUE
@@ -842,7 +851,8 @@ df <- df_plot_data %>% select(Period, Expected_Waiting_List_Size, Waiting_List_S
 str_title <- str_wrap(sprintf('Difference between Expected Waiting List Size (using Delta) and the Actual Waiting List Size of %s (%s) Admitted and Non-Admitted Pathways Combined at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
                               selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                      width = 60)
+                      
 str_x_axis <- 'Month'
 str_y_axis <- 'Waiting List Size'
 #b_interactive <- TRUE
@@ -900,7 +910,8 @@ df <- df_plot_data %>% pivot_longer(cols = 2:3, names_to = 'Metric', values_to =
 str_title <- str_wrap(sprintf('Conversion Rate from Non-Admitted Pathway to Admitted Pathways of %s (%s) at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
                               selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                      width = 60)
+                      
 str_x_axis <- 'Month'
 str_y_axis <- 'Clock Stops'
 #b_interactive <- TRUE
@@ -962,7 +973,7 @@ df_proxy_data <- df_nonadm_wl %>% dplyr::filter(Treatment_Function_Code == selec
 save(list = c('df_proxy_data'), file = paste0(output_dir, '/proxy_data.Robj'))
 write.csv(df_proxy_data, paste0(output_dir, '/proxy_data.csv'), row.names = FALSE)
 
-# * * 3.1.12. Non-admitted clock starts ----
+# * * 3.1.12. Non-admitted proxy clock starts ----
 df_plot_data <- df_proxy_data %>% mutate(Grand_Total = NonAdmProxyAdds)
 
 df_table_data <- df_plot_data %>% 
@@ -1000,10 +1011,10 @@ ftbl_nonadm_proxy_starts <- flextable(data = df_table_data) %>%
   bold(bold = TRUE, part = "header")
 
 # * * * 3.1.12.1. Time series - Entire data set ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Non-Admitted Proxy Clock Starts at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Non-Admitted Proxy Clock Starts at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Month'
 str_y_axis <- 'Non-Admitted Proxy Clock Starts'
 #b_interactive = FALSE
@@ -1011,19 +1022,19 @@ plt_nonadm_proxy_starts_ts_entire <- fnTimeseriesPlot(df = df_plot_data %>% dply
                                                 str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.12.2. Time series - Selected time period ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Non-Admitted Proxy Clock Starts at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Non-Admitted Proxy Clock Starts at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_nonadm_proxy_starts_ts_selected <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                         Period >= end_date - selected_period &
                                                                                         Period <= end_date),
                                                   str_title, str_x_axis, str_y_axis, b_interactive)
 # * * * 3.1.12.3. Histogram - Entire data set ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Non-Admitted Proxy Clock Starts at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Non-Admitted Proxy Clock Starts at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Non-Admitted Proxy Clock Starts'
 str_y_axis <- 'Frequency'
 #b_interactive = TRUE
@@ -1031,10 +1042,10 @@ plt_nonadm_proxy_starts_hs_entire <- fnHistogramPlot(df_plot_data %>% dplyr::fil
                                                str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.12.4. Histogram - Selected time period ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Non-Admitted Porxy Clock Starts at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Non-Admitted Porxy Clock Starts at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_nonadm_proxy_starts_hs_selected <- fnHistogramPlot(df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                   Period >= end_date - selected_period &
                                                                                   Period <= end_date),
@@ -1046,7 +1057,7 @@ save(list = c('plt_nonadm_proxy_starts_ts_entire', 'plt_nonadm_proxy_starts_ts_s
               'ftbl_nonadm_proxy_starts'),
      file = paste0(output_dir, '/non_admitted_proxy_clock_starts.Robj'))
 
-# * * 3.1.13. Non-admitted Proxy clock starts adjusted for working days ----
+# * * 3.1.13. Non-admitted proxy clock starts adjusted for working days ----
 df_plot_data <- df_proxy_data %>% 
   mutate(Grand_Total = NonAdmProxyAdds) %>%
   left_join(df_monthly_working_days, by = c('Period' = 'month')) %>%
@@ -1087,10 +1098,10 @@ ftbl_nonadm_proxy_starts_wda <- flextable(data = df_table_data) %>%
   bold(bold = TRUE, part = "header")
 
 # * * * 3.1.13.1. Time series - Entire data set ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Non-Admitted Proxy Clock Starts Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Non-Admitted Proxy Clock Starts Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Month'
 str_y_axis <- 'Non-Admitted Proxy Clock Starts (Working Day Adjusted)'
 #b_interactive = FALSE
@@ -1098,19 +1109,19 @@ plt_nonadm_proxy_starts_wda_ts_entire <- fnTimeseriesPlot(df = df_plot_data %>% 
                                                     str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.13.2. Time series - Selected time period ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Non-Admitted Proxy Clock Starts Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Non-Admitted Proxy Clock Starts Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_nonadm_proxy_starts_wda_ts_selected <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                             Period >= end_date - selected_period &
                                                                                             Period <= end_date),
                                                       str_title, str_x_axis, str_y_axis, b_interactive)
 # * * * 3.1.13.3. Histogram - Entire data set ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Non-Admitted Proxy Clock Starts Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Non-Admitted Proxy Clock Starts Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Non-Admitted Proxy Clock Starts (Working Day Adjusted)'
 str_y_axis <- 'Frequency'
 #b_interactive = TRUE
@@ -1118,10 +1129,10 @@ plt_nonadm_proxy_starts_wda_hs_entire <- fnHistogramPlot(df_plot_data %>% dplyr:
                                                    str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.13.4. Histogram - Selected time period ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Non-Admitted Proxy Clock Starts Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Non-Admitted Proxy Clock Starts Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_nonadm_proxy_starts_wda_hs_selected <- fnHistogramPlot(df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                       Period >= end_date - selected_period &
                                                                                       Period <= end_date),
@@ -1133,7 +1144,7 @@ save(list = c('plt_nonadm_proxy_starts_wda_ts_entire', 'plt_nonadm_proxy_starts_
               'ftbl_nonadm_proxy_starts_wda'),
      file = paste0(output_dir, '/non_admitted_proxy_clock_starts_wda.Robj'))
 
-# * * 3.1.14. Non-admitted clock stops ----
+# * * 3.1.14. Non-admitted proxy clock stops ----
 df_plot_data <- df_proxy_data %>% mutate(Grand_Total = NonAdmProxyRems)
 
 df_table_data <- df_plot_data %>% 
@@ -1171,10 +1182,10 @@ ftbl_nonadm_proxy_stops <- flextable(data = df_table_data) %>%
   bold(bold = TRUE, part = "header")
 
 # * * * 3.1.14.1. Time series - Entire data set ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Non-Admitted Proxy Clock Stops at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Non-Admitted Proxy Clock Stops at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Month'
 str_y_axis <- 'Non-Admitted Proxy Clock Stops'
 #b_interactive = FALSE
@@ -1182,19 +1193,19 @@ plt_nonadm_proxy_stops_ts_entire <- fnTimeseriesPlot(df = df_plot_data %>% dplyr
                                                str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.14.2. Time series - Selected time period ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Non-Admitted Proxy Clock Stops at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Non-Admitted Proxy Clock Stops at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_nonadm_proxy_stops_ts_selected <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                        Period >= end_date - selected_period &
                                                                                        Period <= end_date),
                                                  str_title, str_x_axis, str_y_axis, b_interactive)
 # * * * 3.1.14.3. Histogram - Entire data set ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Non-Admitted Proxy Clock Stops at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Non-Admitted Proxy Clock Stops at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Non-Admitted Proxy Clock Stops'
 str_y_axis <- 'Frequency'
 #b_interactive = TRUE
@@ -1202,10 +1213,10 @@ plt_nonadm_proxy_stops_hs_entire <- fnHistogramPlot(df_plot_data %>% dplyr::filt
                                               str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.14.4. Histogram - Selected time period ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Non-Admitted Proxy Clock Stops at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Non-Admitted Proxy Clock Stops at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_nonadm_proxy_stops_hs_selected <- fnHistogramPlot(df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                  Period >= end_date - selected_period &
                                                                                  Period <= end_date),
@@ -1259,10 +1270,10 @@ ftbl_nonadm_proxy_stops_wda <- flextable(data = df_table_data) %>%
 
 
 # * * * 3.1.15.1. Time series - Entire data set ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Non-Admitted Proxy Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Non-Admitted Proxy Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Month'
 str_y_axis <- 'Non-Admitted Proxy Clock Stops (Working Day Adjusted)'
 #b_interactive = FALSE
@@ -1270,19 +1281,19 @@ plt_nonadm_proxy_stops_wda_ts_entire <- fnTimeseriesPlot(df = df_plot_data %>% d
                                                    str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.15.2. Time series - Selected time period ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Non-Admitted Proxy Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Non-Admitted Proxy Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_nonadm_proxy_stops_wda_ts_selected <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                            Period >= end_date - selected_period &
                                                                                            Period <= end_date),
                                                      str_title, str_x_axis, str_y_axis, b_interactive)
 # * * * 3.1.15.3. Histogram - Entire data set ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Non-Admitted Proxy Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Non-Admitted Proxy Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Non-Admitted Proxy Clock Stops (Working Day Adjusted)'
 str_y_axis <- 'Frequency'
 #b_interactive = TRUE
@@ -1290,10 +1301,10 @@ plt_nonadm_proxy_stops_wda_hs_entire <- fnHistogramPlot(df_plot_data %>% dplyr::
                                                   str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.15.4. Histogram - Selected time period ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Non-Admitted Proxy Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Non-Admitted Proxy Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_nonadm_proxy_stops_wda_hs_selected <- fnHistogramPlot(df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                      Period >= end_date - selected_period &
                                                                                      Period <= end_date),
@@ -1343,10 +1354,10 @@ ftbl_adm_proxy_stops <- flextable(data = df_table_data) %>%
   bold(bold = TRUE, part = "header")
 
 # * * * 3.1.16.1. Time series - Entire data set ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Admitted Proxy Clock Stops at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Admitted Proxy Clock Stops at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Month'
 str_y_axis <- 'Admitted Proxy Clock Stops'
 #b_interactive = FALSE
@@ -1354,19 +1365,19 @@ plt_adm_proxy_stops_ts_entire <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::f
                                             str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.16.2. Time series - Selected time period ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Admitted Proxy Clock Stops at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Admitted Proxy Clock Stops at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_adm_proxy_stops_ts_selected <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                     Period >= end_date - selected_period &
                                                                                     Period <= end_date),
                                               str_title, str_x_axis, str_y_axis, b_interactive)
 # * * * 3.1.16.3. Histogram - Entire data set ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Admitted Proxy Clock Stops at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Admitted Proxy Clock Stops at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Admitted Proxy Clock Stops'
 str_y_axis <- 'Frequency'
 #b_interactive = TRUE
@@ -1374,10 +1385,10 @@ plt_adm_proxy_stops_hs_entire <- fnHistogramPlot(df_plot_data %>% dplyr::filter(
                                            str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.16.4. Histogram - Selected time period ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Admitted Proxy Clock Stops at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Admitted Proxy Clock Stops at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_adm_proxy_stops_hs_selected <- fnHistogramPlot(df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                               Period >= end_date - selected_period &
                                                                               Period <= end_date),
@@ -1430,10 +1441,10 @@ ftbl_adm_proxy_stops_wda <- flextable(data = df_table_data) %>%
   bold(bold = TRUE, part = "header")
 
 # * * * 3.1.17.1. Time series - Entire data set ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Admitted Proxy Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Admitted Proxy Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Month'
 str_y_axis <- 'Admitted Proxy Clock Stops (Working Day Adjusted)'
 #b_interactive = FALSE
@@ -1441,19 +1452,19 @@ plt_adm_proxy_stops_wda_ts_entire <- fnTimeseriesPlot(df = df_plot_data %>% dply
                                                 str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.17.2. Time series - Selected time period ----
-str_title <- str_wrap(sprintf('Time Series of %s (%s) Admitted Proxy Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Time Series of %s (%s) Admitted Proxy Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_adm_proxy_stops_wda_ts_selected <- fnTimeseriesPlot(df = df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                         Period >= end_date - selected_period &
                                                                                         Period <= end_date),
                                                   str_title, str_x_axis, str_y_axis, b_interactive)
 # * * * 3.1.17.3. Histogram - Entire data set ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Admitted Proxy Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Admitted Proxy Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y'))
+                      
 str_x_axis <- 'Admitted Proxy Clock Stops (Working Day Adjusted)'
 str_y_axis <- 'Frequency'
 #b_interactive = TRUE
@@ -1461,10 +1472,10 @@ plt_adm_proxy_stops_wda_hs_entire <- fnHistogramPlot(df_plot_data %>% dplyr::fil
                                                str_title, str_x_axis, str_y_axis, b_interactive)
 
 # * * * 3.1.17.4. Histogram - Selected time period ----
-str_title <- str_wrap(sprintf('Histogram of %s (%s) Admitted Proxy Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
+str_title <- sprintf('Histogram of %s (%s) Admitted Proxy Clock Stops Adjusted for Working Days and Standardised to a 21 Working Day Month at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
-                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                              selected_tfc, organisation_name, format(end_date - selected_period, '%b-%y'), format(end_date, '%b-%y'))
+                      
 plt_adm_proxy_stops_wda_hs_selected <- fnHistogramPlot(df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc &
                                                                                   Period >= end_date - selected_period &
                                                                                   Period <= end_date),
@@ -1486,7 +1497,8 @@ df <- df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc)
 str_title <- str_wrap(sprintf('Scatterplot of Non-Admitted Waiting List against 92%% Standard Achievement of %s (%s) at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
                               selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                      width = 60)
+                      
 str_x_axis <- 'Non-Admitted Waiting List Size'
 str_y_axis <- '92% Standard Achievement'
 #b_interactive <- FALSE
@@ -1529,7 +1541,8 @@ plt_nonadm_max_wl_size_scatter <- plt
 str_title <- str_wrap(sprintf('Time Series of Non-Admitted Waiting List against 92%% Standard Achievement of %s (%s) at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
                               selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                      width = 60)
+                      
 str_x_axis <- 'Month' 
 str_y_axis <- 'Non-Admitted Waiting List Size'
 #b_interactive <- TRUE
@@ -1583,7 +1596,8 @@ df <- df_plot_data %>% dplyr::filter(Treatment_Function_Code == selected_tfc)
 str_title <- str_wrap(sprintf('Scatterplot of Admitted Waiting List against 92%% Standard Achievement of %s (%s) at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
                               selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                      width = 60)
+                      
 str_x_axis <- 'Admitted Waiting List Size'
 str_y_axis <- '92% Standard Achievement'
 #b_interactive <- FALSE
@@ -1622,11 +1636,12 @@ if(!b_interactive){
 }
 plt_adm_max_wl_size_scatter <- plt
 
-# * * * 3.1.18.2. Admitted maximum sustainable list size time series ----
+# * * * 3.1.19.2. Admitted maximum sustainable list size time series ----
 str_title <- str_wrap(sprintf('Time Series of Admitted Waiting List against 92%% Standard Achievement of %s (%s) at %s for the Period %s to %s',
                               df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
                               selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
-                      width = 100)
+                      width = 60)
+                      
 str_x_axis <- 'Month' 
 str_y_axis <- 'Admitted Waiting List Size'
 #b_interactive <- TRUE
@@ -1666,6 +1681,90 @@ if(!b_interactive){
 }
 plt_adm_max_wl_size_ts <- plt
 
-# * * * 3.1.18.3. Output RObject ----
+# * * * 3.1.19.3. Output RObject ----
 save(list = c('plt_adm_max_wl_size_scatter', 'plt_adm_max_wl_size_ts'),
      file = paste0(output_dir, '/admitted_max_list_size.Robj'))
+
+# * * 3.1.20. Non-Admitted waiting list shape ----
+df_plot_data <- df_nonadm_wl_shape
+  
+# * * * 3.1.20.1. Non-Admitted waiting list shape ----
+df <- df_plot_data %>% 
+  dplyr::filter(Treatment_Function_Code == selected_tfc) %>% 
+  mutate(cum_vol = cumsum(Volume),
+         cum_pct = cum_vol/sum(Volume, na.rm = TRUE))
+  
+str_title <- str_wrap(sprintf('Non-Admitted Waiting List Profile of %s (%s) at %s for the Period %s to %s',
+                              df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
+                      width = 60)
+                      
+str_x_axis <- 'Weeks Waited'
+str_y_axis <- 'Volume'
+#b_interactive <- FALSE
+
+if(!b_interactive){
+  plt <- ggplot() %+%
+    theme_bw(base_size = 12) %+%
+    theme(plot.title = element_text(hjust = .5)) %+%
+    labs(title = str_title, x = str_x_axis, y = str_y_axis) %+%
+    geom_bar(data = df, aes(x = Weeks, y = Volume), stat = 'identity', fill = '#005EB8')
+} else {
+  plt <- plotly::plot_ly() %>%
+    add_trace(data = df,
+              type = 'bar',
+              x = ~Weeks,
+              y = ~Volume,
+              text = ~sprintf('%.1f%%', cum_pct*100),
+              marker = list(color = '#005EB8')) %>%
+    layout(title =str_title,
+           xaxis = list(title = str_x_axis),
+           yaxis = list(title = str_y_axis))
+}
+plt_nonadm_wl_shape <- plt
+
+# * * * 3.1.20.2. Output RObject ----
+save(list = c('plt_nonadm_wl_shape'),
+     file = paste0(output_dir, '/non_admitted_wl_profile.Robj'))
+
+# * * 3.1.21. Admitted waiting list shape ----
+df_plot_data <- df_adm_wl_shape
+
+# * * * 3.1.21.1. Admitted waiting list shape ----
+df <- df_plot_data %>% 
+  dplyr::filter(Treatment_Function_Code == selected_tfc) %>% 
+  mutate(cum_vol = cumsum(Volume),
+         cum_pct = cum_vol/sum(Volume, na.rm = TRUE))
+
+str_title <- str_wrap(sprintf('Admitted Waiting List Profile of %s (%s) at %s for the Period %s to %s',
+                              df_tfc_lu$Treatment_Function_Name[df_tfc_lu$Treatment_Function_Code==selected_tfc],
+                              selected_tfc, organisation_name, format(start_date, '%b-%y'), format(end_date, '%b-%y')),
+                      width = 60)
+                      
+str_x_axis <- 'Weeks Waited'
+str_y_axis <- 'Volume'
+#b_interactive <- FALSE
+
+if(!b_interactive){
+  plt <- ggplot() %+%
+    theme_bw(base_size = 12) %+%
+    theme(plot.title = element_text(hjust = .5)) %+%
+    labs(title = str_title, x = str_x_axis, y = str_y_axis) %+%
+    geom_bar(data = df, aes(x = Weeks, y = Volume), stat = 'identity', fill = '#005EB8')
+} else {
+  plt <- plotly::plot_ly() %>%
+    add_trace(data = df,
+              type = 'bar',
+              x = ~Weeks,
+              y = ~Volume,
+              text = ~sprintf('%.1f%%', cum_pct*100),
+              marker = list(color = '#005EB8')) %>%
+    layout(title =str_title,
+           xaxis = list(title = str_x_axis),
+           yaxis = list(title = str_y_axis))
+}
+plt_adm_wl_shape <- plt
+
+# * * * 3.1.21.2. Output RObject ----
+save(list = c('plt_adm_wl_shape'),
+     file = paste0(output_dir, '/admitted_wl_profile.Robj'))
