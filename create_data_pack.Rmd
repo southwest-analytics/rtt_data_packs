@@ -1,0 +1,16 @@
+---
+title: "RTT Data Pack Example"
+author: "Richard Blackwell"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+source('create_data_pack.R')
+```
+
+# Historic Data
+
+## Non-Admitted Clock Stops
+```{r nonadm_clock_stops, echo = FALSE}
+```

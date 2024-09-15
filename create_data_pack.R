@@ -15,7 +15,7 @@ wl_start_date <- as.Date('2022-04-01')
 conversion_period <- months(23)
 output_dir <- 'output'
 dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
-b_interactive = TRUE
+b_interactive = FALSE
 
 fnTimeseriesPlot <- function(df, str_title, str_x_axis, str_y_axis, b_interactive = FALSE){
   if(!b_interactive){
