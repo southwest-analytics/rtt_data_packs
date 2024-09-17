@@ -1,401 +1,524 @@
 ---
-title: "RTT Data Pack Example"
-author: "Richard Blackwell"
-date: "`r Sys.Date()`"
+params:
+  set_title: Referral to Treatment Data Pack for Specialty at NHS Trust
+  set_author: Author
+  set_subtitle: X_00 - Treatment Function
+  elements_dir: ./Output/RH8/C_110/
+
 output:
   html_document:
     toc: true
     toc_float: true
+
+title: "`r params$set_title`"
+author: "`r params$set_author`"
+date: "`r Sys.Date()`"
+subtitle: "`r params$set_subtitle`"
 ---
 
-
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
-source('create_data_pack.R')
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, ft.keepnext = TRUE) 
+
+library(flextable)
+elements_dir <- params$elements_dir
+
+# Load all the data from the output directory
+file_list <- list.files(elements_dir, pattern = 'RObj', ignore.case = TRUE, full.names = TRUE)
+lapply(file_list, load, envir = .GlobalEnv)
 ```
+
+\pagebreak
 
 # Historic Data
 
 ## 1.1. Non-admitted clock start
-```{r 3.1.1., echo = FALSE}
+
+```{r 3.1.1., echo = FALSE, fig.width = 9}
 ftbl_nonadm_starts
 ```
 
 ### 1.1.1. Time Series Entire
+
 ```{r 3.1.1.1., echo = FALSE, fig.width = 9}
 plt_nonadm_starts_ts_entire
 ```
 
 ### 1.1.2. Time Series Selected Period
+
 ```{r 3.1.1.2., echo = FALSE, fig.width = 9}
 plt_nonadm_starts_ts_selected
 ```
 
 ### 1.1.3. Histogram Entire
+
 ```{r 3.1.1.3., echo = FALSE, fig.width = 9}
 plt_nonadm_starts_hs_entire
 ```
 
 ### 1.1.4. Histogram Selected Period
+
 ```{r 3.1.1.4., echo = FALSE, fig.width = 9}
 plt_nonadm_starts_hs_selected
 ```
 
+\pagebreak
+
 ## 1.2. Non-admitted clock starts adjusted for working days
-```{r 3.1.2., echo = FALSE}
+
+```{r 3.1.2., echo = FALSE, fig.width = 9}
 ftbl_nonadm_starts_wda
 ```
 
 ### 1.2.1. Time Series Entire
-```{r 3.1.2.1., echo = FALSE}
+
+```{r 3.1.2.1., echo = FALSE, fig.width = 9}
 plt_nonadm_starts_wda_ts_entire
 ```
 
 ### 1.2.2. Time Series Selected Period
-```{r 3.1.2.2., echo = FALSE}
+
+```{r 3.1.2.2., echo = FALSE, fig.width = 9}
 plt_nonadm_starts_wda_ts_selected
 ```
 
 ### 1.2.3. Histogram Entire
-```{r 3.1.2.3., echo = FALSE}
+
+```{r 3.1.2.3., echo = FALSE, fig.width = 9}
 plt_nonadm_starts_wda_hs_entire
 ```
 
 ### 1.2.4. Histogram Selected Period
-```{r 3.1.2.4., echo = FALSE}
+
+```{r 3.1.2.4., echo = FALSE, fig.width = 9}
 plt_nonadm_starts_wda_hs_selected
 ```
 
+\pagebreak
+
 ## 1.3. Non-admitted clock stops
-```{r 3.1.3., echo = FALSE}
+
+```{r 3.1.3., echo = FALSE, fig.width = 9}
 ftbl_nonadm_stops
 ```
 
 ### 1.3.1. Time Series Entire
-```{r 3.1.3.1., echo = FALSE}
+
+```{r 3.1.3.1., echo = FALSE, fig.width = 9}
 plt_nonadm_stops_ts_entire
 ```
 
 ### 1.3.2. Time Series Selected Period
-```{r 3.1.3.2., echo = FALSE}
+
+```{r 3.1.3.2., echo = FALSE, fig.width = 9}
 plt_nonadm_stops_ts_selected
 ```
 
 ### 1.3.3. Histogram Entire
-```{r 3.1.3.3., echo = FALSE}
+
+```{r 3.1.3.3., echo = FALSE, fig.width = 9}
 plt_nonadm_stops_hs_entire
 ```
 
 ### 1.3.4. Histogram Selected Period
-```{r 3.1.3.4., echo = FALSE}
+
+```{r 3.1.3.4., echo = FALSE, fig.width = 9}
 plt_nonadm_stops_hs_selected
 ```
 
+\pagebreak
+
 ## 1.4. Non-admitted clock stops adjusted for working days
-```{r 3.1.4., echo = FALSE}
+
+```{r 3.1.4., echo = FALSE, fig.width = 9}
 ftbl_nonadm_stops_wda
 ```
 
 ### 1.4.1. Time Series Entire
-```{r 3.1.4.1., echo = FALSE}
+
+```{r 3.1.4.1., echo = FALSE, fig.width = 9}
 plt_nonadm_stops_wda_ts_entire
 ```
 
 ### 1.4.2. Time Series Selected Period
-```{r 3.1.4.2., echo = FALSE}
+
+```{r 3.1.4.2., echo = FALSE, fig.width = 9}
 plt_nonadm_stops_wda_ts_selected
 ```
 
 ### 1.4.3. Histogram Entire
-```{r 3.1.4.3., echo = FALSE}
+
+```{r 3.1.4.3., echo = FALSE, fig.width = 9}
 plt_nonadm_stops_wda_hs_entire
 ```
 
 ### 1.4.4. Histogram Selected Period
-```{r 3.1.4.4., echo = FALSE}
+
+```{r 3.1.4.4., echo = FALSE, fig.width = 9}
 plt_nonadm_stops_wda_hs_selected
 ```
 
+\pagebreak
+
 ## 1.5. Admitted clock stops
-```{r 3.1.5., echo = FALSE}
+
+```{r 3.1.5., echo = FALSE, fig.width = 9}
 ftbl_adm_stops
 ```
 
 ### 1.5.1. Time Series Entire
-```{r 3.1.5.1., echo = FALSE}
+
+```{r 3.1.5.1., echo = FALSE, fig.width = 9}
 plt_adm_stops_ts_entire
 ```
 
 ### 1.5.2. Time Series Selected Period
-```{r 3.1.5.2., echo = FALSE}
+
+```{r 3.1.5.2., echo = FALSE, fig.width = 9}
 plt_adm_stops_ts_selected
 ```
 
 ### 1.5.3. Histogram Entire
-```{r 3.1.5.3., echo = FALSE}
+
+```{r 3.1.5.3., echo = FALSE, fig.width = 9}
 plt_adm_stops_hs_entire
 ```
 
 ### 1.5.4. Histogram Selected Period
-```{r 3.1.5.4., echo = FALSE}
+
+```{r 3.1.5.4., echo = FALSE, fig.width = 9}
 plt_adm_stops_hs_selected
 ```
 
+\pagebreak
+
 ## 1.6. Admitted clock stops adjusted for working days
-```{r 3.1.6., echo = FALSE}
+
+```{r 3.1.6., echo = FALSE, fig.width = 9}
 ftbl_adm_stops_wda
 ```
 
 ### 1.6.1. Time Series Entire
-```{r 3.1.6.1., echo = FALSE}
+
+```{r 3.1.6.1., echo = FALSE, fig.width = 9}
 plt_adm_stops_wda_ts_entire
 ```
 
 ### 1.6.2. Time Series Selected Period
-```{r 3.1.6.2., echo = FALSE}
+
+```{r 3.1.6.2., echo = FALSE, fig.width = 9}
 plt_adm_stops_wda_ts_selected
 ```
 
 ### 1.6.3. Histogram Entire
-```{r 3.1.6.3., echo = FALSE}
+
+```{r 3.1.6.3., echo = FALSE, fig.width = 9}
 plt_adm_stops_wda_hs_entire
 ```
 
 ### 1.6.4. Histogram Selected Period
-```{r 3.1.6.4., echo = FALSE}
+
+```{r 3.1.6.4., echo = FALSE, fig.width = 9}
 plt_adm_stops_wda_hs_selected
 ```
+
+\pagebreak
 
 ## 1.7. Non-admitted open pathways
 
 ### 1.7.1. Time Series Entire
-```{r 3.1.7.1., echo = FALSE}
+
+```{r 3.1.7.1., echo = FALSE, fig.width = 9}
 plt_nonadm_wl_size_ts_entire
 ```
 
 ### 1.7.2. Time Series Selected Period
-```{r 3.1.7.2., echo = FALSE}
+
+```{r 3.1.7.2., echo = FALSE, fig.width = 9}
 plt_nonadm_wl_size_ts_selected
 ```
+
+\pagebreak
 
 ## 1.8. Admitted open pathways
 
 ### 1.8.1. Time Series Entire
-```{r 3.1.8.1., echo = FALSE}
+
+```{r 3.1.8.1., echo = FALSE, fig.width = 9}
 plt_adm_wl_size_ts_entire
 ```
 
 ### 1.8.2. Time Series Selected Period
-```{r 3.1.8.2., echo = FALSE}
+
+```{r 3.1.8.2., echo = FALSE, fig.width = 9}
 plt_adm_wl_size_ts_selected
 ```
+
+\pagebreak
 
 ## 1.9. Change in waiting list
 
 ### 1.9.1. Observed vs. Expected Waiting List Changes
-```{r 3.1.9.1., echo = FALSE}
+
+```{r 3.1.9.1., echo = FALSE, fig.width = 9}
 plt_observed_vs_expected_waiting_list_changes
 ```
 
 ### 1.9.2. Expected vs. Acutal Waiting List Size
-```{r 3.1.9.2., echo = FALSE}
+
+```{r 3.1.9.2., echo = FALSE, fig.width = 9}
 plt_expected_vs_actual_waiting_list_size
 ```
+
+\pagebreak
 
 ## 1.10. Conversion Rate
 
 ## 1.10.1. Conversion Rate
-```{r 3.1.10.1., echo = FALSE}
+
+```{r 3.1.10.1., echo = FALSE, fig.width = 9}
 plt_conversion_rate_to_adm
 sprintf('Conversion Rate to Admitted Pathway = %.1f%%', conversion_rate_to_adm * 100)
 ```
 
+\pagebreak
+
 ## 1.11. Proxy clock stops
 
 ## 1.12. Non-admitted proxy clock starts
-```{r 3.1.12., echo = FALSE}
+
+```{r 3.1.12., echo = FALSE, fig.width = 9}
 ftbl_nonadm_proxy_starts
 ```
 
 ### 1.12.1. Time Series Entire
-```{r 3.1.12.1., echo = FALSE}
+
+```{r 3.1.12.1., echo = FALSE, fig.width = 9}
 plt_nonadm_proxy_starts_ts_entire
 ```
 
 ### 1.12.2. Time Series Selected Period
-```{r 3.1.12.2., echo = FALSE}
+
+```{r 3.1.12.2., echo = FALSE, fig.width = 9}
 plt_nonadm_proxy_starts_ts_selected
 ```
 
 ### 1.12.3. Histogram Entire
-```{r 3.1.12.3., echo = FALSE}
+
+```{r 3.1.12.3., echo = FALSE, fig.width = 9}
 plt_nonadm_proxy_starts_hs_entire
 ```
 
 ### 1.12.4. Histogram Selected Period
-```{r 3.1.12.4., echo = FALSE}
+
+```{r 3.1.12.4., echo = FALSE, fig.width = 9}
 plt_nonadm_proxy_starts_hs_selected
 ```
 
+\pagebreak
+
 ## 1.13. Non-admitted Proxy clock starts adjusted for working days
-```{r 3.1.13., echo = FALSE}
+
+```{r 3.1.13., echo = FALSE, fig.width = 9}
 ftbl_nonadm_proxy_starts_wda
 ```
 
 ### 1.13.1. Time Series Entire
-```{r 3.1.13.1., echo = FALSE}
+
+```{r 3.1.13.1., echo = FALSE, fig.width = 9}
 plt_nonadm_proxy_starts_wda_ts_entire
 ```
 
 ### 1.13.2. Time Series Selected Period
-```{r 3.1.13.2., echo = FALSE}
+
+```{r 3.1.13.2., echo = FALSE, fig.width = 9}
 plt_nonadm_proxy_starts_wda_ts_selected
 ```
 
 ### 1.13.3. Histogram Entire
-```{r 3.1.13.3., echo = FALSE}
+
+```{r 3.1.13.3., echo = FALSE, fig.width = 9}
 plt_nonadm_proxy_starts_wda_hs_entire
 ```
 
 ### 1.13.4. Histogram Selected Period
-```{r 3.1.13.4., echo = FALSE}
+
+```{r 3.1.13.4., echo = FALSE, fig.width = 9}
 plt_nonadm_proxy_starts_wda_hs_selected
 ```
 
+\pagebreak
+
 ## 1.14. Non-admitted clock stops
-```{r 3.1.14., echo = FALSE}
+
+```{r 3.1.14., echo = FALSE, fig.width = 9}
 ftbl_nonadm_proxy_stops
 ```
 
 ### 1.4.1. Time Series Entire
-```{r 3.1.14.1., echo = FALSE}
+
+```{r 3.1.14.1., echo = FALSE, fig.width = 9}
 plt_nonadm_proxy_stops_ts_entire
 ```
 
 ### 1.4.2. Time Series Selected Period
-```{r 3.1.14.2., echo = FALSE}
+
+```{r 3.1.14.2., echo = FALSE, fig.width = 9}
 plt_nonadm_proxy_stops_ts_selected
 ```
 
 ### 1.4.3. Histogram Entire
-```{r 3.1.14.3., echo = FALSE}
+
+```{r 3.1.14.3., echo = FALSE, fig.width = 9}
 plt_nonadm_proxy_stops_hs_entire
 ```
 
 ### 1.4.4. Histogram Selected Period
-```{r 3.1.14.4., echo = FALSE}
+
+```{r 3.1.14.4., echo = FALSE, fig.width = 9}
 plt_nonadm_proxy_stops_hs_selected
 ```
 
+\pagebreak
+
 ## 1.15. Non-admitted proxy clock stops adjusted for working days
-```{r 3.1.15., echo = FALSE}
+
+```{r 3.1.15., echo = FALSE, fig.width = 9}
 ftbl_nonadm_proxy_stops_wda
 ```
 
 ### 1.15.1. Time Series Entire
-```{r 3.1.15.1., echo = FALSE}
+
+```{r 3.1.15.1., echo = FALSE, fig.width = 9}
 plt_nonadm_proxy_stops_wda_ts_entire
 ```
 
 ### 1.15.2. Time Series Selected Period
-```{r 3.1.15.2., echo = FALSE}
+
+```{r 3.1.15.2., echo = FALSE, fig.width = 9}
 plt_nonadm_proxy_stops_wda_ts_selected
 ```
 
 ### 1.15.3. Histogram Entire
-```{r 3.1.15.3., echo = FALSE}
+
+```{r 3.1.15.3., echo = FALSE, fig.width = 9}
 plt_nonadm_proxy_stops_wda_hs_entire
 ```
 
 ### 1.15.4. Histogram Selected Period
-```{r 3.1.15.4., echo = FALSE}
+
+```{r 3.1.15.4., echo = FALSE, fig.width = 9}
 plt_nonadm_proxy_stops_wda_hs_selected
 ```
 
+\pagebreak
+
 ## 1.16. Admitted proxy clock stops
-```{r 3.1.16., echo = FALSE}
+
+```{r 3.1.16., echo = FALSE, fig.width = 9}
 ftbl_adm_proxy_stops
 ```
 
 ### 1.16.1. Time Series Entire
-```{r 3.1.16.1., echo = FALSE}
+
+```{r 3.1.16.1., echo = FALSE, fig.width = 9}
 plt_adm_proxy_stops_ts_entire
 ```
 
 ### 1.16.2. Time Series Selected Period
-```{r 3.1.16.2., echo = FALSE}
+
+```{r 3.1.16.2., echo = FALSE, fig.width = 9}
 plt_adm_proxy_stops_ts_selected
 ```
 
 ### 1.16.3. Histogram Entire
-```{r 3.1.16.3., echo = FALSE}
+
+```{r 3.1.16.3., echo = FALSE, fig.width = 9}
 plt_adm_proxy_stops_hs_entire
 ```
 
 ### 1.16.4. Histogram Selected Period
-```{r 3.1.16.4., echo = FALSE}
+
+```{r 3.1.16.4., echo = FALSE, fig.width = 9}
 plt_adm_proxy_stops_hs_selected
 ```
 
+\pagebreak
+
 ## 1.17. Admitted proxy clock stops adjusted for working days
-```{r 3.1.17., echo = FALSE}
+
+```{r 3.1.17., echo = FALSE, fig.width = 9}
 ftbl_adm_proxy_stops_wda
 ```
 
 ### 1.17.1. Time Series Entire
-```{r 3.1.17.1., echo = FALSE}
+
+```{r 3.1.17.1., echo = FALSE, fig.width = 9}
 plt_adm_proxy_stops_wda_ts_entire
 ```
 
 ### 1.17.2. Time Series Selected Period
-```{r 3.1.17.2., echo = FALSE}
+
+```{r 3.1.17.2., echo = FALSE, fig.width = 9}
 plt_adm_proxy_stops_wda_ts_selected
 ```
 
 ### 1.17.3. Histogram Entire
-```{r 3.1.17.3., echo = FALSE}
+
+```{r 3.1.17.3., echo = FALSE, fig.width = 9}
 plt_adm_proxy_stops_wda_hs_entire
 ```
 
 ### 1.17.4. Histogram Selected Period
-```{r 3.1.17.4., echo = FALSE}
+
+```{r 3.1.17.4., echo = FALSE, fig.width = 9}
 plt_adm_proxy_stops_wda_hs_selected
 ```
+
+\pagebreak
 
 ## 1.18. Non-Admitted maximum sustainable list size
 
 ### 1.18.1. Scatter Plot
-```{r 3.1.18.1., echo = FALSE}
+
+```{r 3.1.18.1., echo = FALSE, fig.width = 9}
 plt_nonadm_max_wl_size_scatter
 ```
 
 ### 1.18.1. Time Series
-```{r 3.1.18.2., echo = FALSE}
+
+```{r 3.1.18.2., echo = FALSE, fig.width = 9}
 plt_nonadm_max_wl_size_ts
 ```
+
+\pagebreak
 
 ## 1.19. Admitted maximum sustainable list size
 
 ### 1.19.1. Scatter Plot
-```{r 3.1.19.1., echo = FALSE}
+
+```{r 3.1.19.1., echo = FALSE, fig.width = 9}
 plt_adm_max_wl_size_scatter
 ```
 
 ### 1.19.1. Time Series
-```{r 3.1.19.2., echo = FALSE}
+```{r 3.1.19.2., echo = FALSE, fig.width = 9}
 plt_adm_max_wl_size_ts
 ```
+
+\pagebreak
 
 # Current Data
 
 ## 1.20. Waiting list shape
 
 ### 1.20.1. Non-Admitted waiting list profile
-```{r 3.1.20.1., echo = FALSE}
+
+```{r 3.1.20.1., echo = FALSE, fig.width = 9}
 plt_nonadm_wl_shape
 ```
 
 ### 1.21.1. Admitted waiting list profile
-```{r 3.1.20.2., echo = FALSE}
+
+```{r 3.1.20.2., echo = FALSE, fig.width = 9}
 plt_adm_wl_shape
 ```
